@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EW Compass Trainer</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --ring:#555; --tick:#777; --line:#6a6a6a;
+    --east-tint: rgba(255,180,40,.08);  /* warm sunrise */
+    --west-tint: rgba(110,150,255,.10); /* cool twilight */
+    --ns-tint:   rgba(255,255,255,.03); /* neutral */
+    --ok:#0f0; --bad:#f33; --text:#fff;
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{height:100%;display:flex;align-items:center;justify-content:center}
+  .compass{position:relative;width:92vmin;height:92vmin;border-radius:50%;
+           border:5px solid var(--ring); overflow:hidden}
+  /* subtle ticks via SVG ring under everything */
+  .ticks{position:absolute;inset:0;opacity:.5;pointer-events:none}
+  /* quadrants: X-geometry, not + ; we still use 4 hit layers sized as halves for simplicity */
+  .q{position:absolute;width:50%;height:50%;transition:background .12s}
+  #qT{top:0;left:25%;background:var(--ns-tint)}
+  #qB{bottom:0;left:25%;background:var(--ns-tint)}
+  #qL{top:25%;left:0;background:var(--west-tint)}
+  #qR{top:25%;right:0;background:var(--east-tint)}
+  .flash-ok{background:var(--ok)!important}
+  .flash-bad{background:var(--bad)!important}
+  /* X dividers (diagonals) */
+  .diag{position:absolute;left:50%;top:50%;width:140%;height:0;border-top:2px solid var(--line);transform-origin:center;pointer-events:none}
+  #d1{transform:translate(-50%,-50%) rotate(45deg)}
+  #d2{transform:translate(-50%,-50%) rotate(-45deg)}
+  /* arrow (proper stem + head) centered, slightly faint */
+  .arrow{position:absolute;left:50%;top:50%;width:0;height:0;transform-origin:50% 50%;opacity:.75;filter:drop-shadow(0 0 6px rgba(0,0,0,.6))}
+  /* Build arrow with two parts for clarity */
+  .shaft{position:absolute;left:50%;top:50%;width:1.2vmin;height:36vmin;background:#fff;transform:translate(-50%,-95%);border-radius:.6vmin}
+  .head{position:absolute;left:50%;top:50%;width:0;height:0;transform:translate(-50%,-107%);
+        border-left:3.6vmin solid transparent;border-right:3.6vmin solid transparent;border-bottom:6.8vmin solid #fff}
+  /* center prompt */
+  .prompt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:11vmin;font-weight:800;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="comp" class="compass" aria-label="Compass">
+    <!-- subtle tick ring -->
+    <svg class="ticks" viewBox="0 0 100 100" aria-hidden="true">
+      <defs>
+        <style>
+          .t1{stroke: #777; stroke-width: 0.6; stroke-linecap: round;}
+          .t2{stroke: #777; stroke-width: 0.9; stroke-linecap: round;}
+        </style>
+      </defs>
+      <!-- minor ticks every 15°, major every 45° -->
+      <g transform="translate(50,50)">
+        <!-- 24 minor ticks -->
+        <!-- generated conceptually; written explicitly for size reliability -->
+        <!-- minor -->
+        <g id="mins">
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(15)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(30)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(60)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(75)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(105)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(120)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(150)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(165)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(195)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(210)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(240)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(255)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(285)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(300)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(330)"/>
+          <line class="t1" x1="0" y1="-46" x2="0" y2="-42" transform="rotate(345)"/>
+        </g>
+        <!-- major -->
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(45)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(90)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(135)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(180)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(225)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(270)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(315)"/>
+        <line class="t2" x1="0" y1="-47" x2="0" y2="-40" transform="rotate(0)"/>
+      </g>
+    </svg>
+
+    <!-- quadrants for hit/flash -->
+    <div id="qT" class="q"></div>
+    <div id="qB" class="q"></div>
+    <div id="qL" class="q"></div>
+    <div id="qR" class="q"></div>
+
+    <!-- visual X -->
+    <div id="d1" class="diag"></div>
+    <div id="d2" class="diag"></div>
+
+    <!-- arrow (north cue) -->
+    <div id="arrow" class="arrow" aria-hidden="true">
+      <div class="shaft"></div>
+      <div class="head"></div>
+    </div>
+
+    <!-- prompt -->
+    <div id="prompt" class="prompt">?</div>
+  </div>
+</div>
+
+<script>
+  // --- state ---
+  let maxRot = 18;             // starts near-North
+  const maxRotCap = 170;       // difficulty cap
+  const rotStep = 6;           // how fast difficulty increases
+  let angle = 0;               // current arrow rotation
+  let current = "";            // "East" | "West"
+  let ready = false;
+
+  // --- elements ---
+  const comp = document.getElementById('comp');
+  const qT = document.getElementById('qT'), qB = document.getElementById('qB'),
+        qL = document.getElementById('qL'), qR = document.getElementById('qR');
+  const promptEl = document.getElementById('prompt');
+  const arrowEl = document.getElementById('arrow');
+  const quads = { T:qT, B:qB, L:qL, R:qR };
+
+  // --- helpers ---
+  function randSigned(max){ const m=Math.max(0,max); const mag=Math.random()*m; return (Math.random()<.5?-1:1)*mag; }
+  function setArrow(a){ arrowEl.style.transform = `rotate(${a}deg)`; }
+  function clearFlashes(){ for (const q of Object.values(quads)) q.classList.remove('flash-ok','flash-bad'); }
+
+  // Determine X-quadrant from an absolute angle where 0=Up, 90=Right
+  function angleToQuad(a){
+    a = (a%360+360)%360;
+    if (a>=45 && a<135) return 'R';
+    if (a>=135 && a<225) return 'B';
+    if (a>=225 && a<315) return 'L';
+    return 'T';
+  }
+
+  // Expected quadrant given current prompt and arrow heading
+  function expectedQuad(){
+    const off = (current === 'East') ? 90 : 270; // East = right of arrow, West = left
+    const target = (angle + off) % 360;
+    return angleToQuad(target);
+  }
+
+  // Map a click/touch to which X-quadrant was tapped
+  function tapToQuad(clientX, clientY){
+    const r = comp.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const dx = clientX - cx, dy = clientY - cy;
+    const deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    return angleToQuad(deg);
+  }
+
+  function nextRound(){
+    // pick direction & gentle rotation
+    current = Math.random() < 0.5 ? 'East' : 'West';
+    promptEl.textContent = current.toUpperCase();
+    angle = randSigned(maxRot);
+    setArrow(angle);
+    ready = true;
+  }
+
+  function handlePick(q){
+    if (!ready) return;
+    ready = false;
+    const exp = expectedQuad();
+    // Only L/R are valid; taps on T/B count as wrong but still give feedback
+    const ok = (q === exp) && (q === 'L' || q === 'R');
+    quads[q].classList.add(ok ? 'flash-ok' : 'flash-bad');
+
+    setTimeout(() => {
+      clearFlashes();
+      if (maxRot < maxRotCap) maxRot = Math.min(maxRotCap, maxRot + rotStep);
+      nextRound();
+    }, 360);
+  }
+
+  // events
+  comp.addEventListener('click',   e => handlePick(tapToQuad(e.clientX, e.clientY)));
+  comp.addEventListener('touchstart', e => {
+    const t = e.touches && e.touches[0];
+    if (t) handlePick(tapToQuad(t.clientX, t.clientY));
+  }, { passive:true });
+
+  // go
+  nextRound();
+</script>
+</body>
+</html>
